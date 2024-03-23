@@ -247,6 +247,53 @@ async function buscarFacturaPorNM(nm) {
     } 
 }
 
+async function createClienteSAT(nombre_legal, RFC, Regimen_Fiscal) {
+    try {
+        await client.connect();
+        const collection = client.db("Clientes").collection("clientes_data");
+        
+        // Verificar si el cliente ya existe en la base de datos
+        const existingCliente = await collection.findOne({ RFC });
+        if (existingCliente) {
+            throw new Error('Error 400: El cliente ya está registrado.');
+        }
+
+        //Validar regimen fiscal y obtener solo el número
+        const regimenNumero = await cl.validarRegimenRF(Regimen_Fiscal);
+        if (regimenNumero === "Regimen fiscal inexistente") {
+            throw new Error("Error 400: Regimen fiscal inexistente");
+        }
+
+        // Crear un nuevo cliente con el número de régimen fiscal
+        const newCliente = {
+            nombre_legal,
+            RFC,
+            Regimen_Fiscal: regimenNumero,
+        };
+
+        // Insertar el nuevo cliente en la colección
+        const result = await collection.insertOne(newCliente);
+
+        console.log(`(201) Cliente agregado con éxito`);
+        return newCliente;
+    } catch (error) {
+        console.error("Error 400: Error al insertar cliente en la base de datos:", error.message);
+        throw error;
+    }
+}
+
+async function getClientevRFC() {
+    try {
+        const db = client.db('Clientes');
+        const collection = db.collection('clientes_data');
+
+        const clientes = await collection.find().toArray();
+        return clientes;
+    } catch (error) {
+        console.error("Error 400: Error al obtener clientes de la base de datos:", error);
+        throw error;
+    }
+}
 
 main().catch(console.error);
 module.exports = {
@@ -258,6 +305,8 @@ module.exports = {
     getFacturas,
     buscarClientePorRFC,
     buscarProductoPorPK,
-    buscarFacturaPorNM
+    buscarFacturaPorNM,
+    createClienteSAT,
+    getClientevRFC
 }
 

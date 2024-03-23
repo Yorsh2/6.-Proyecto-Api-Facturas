@@ -48,7 +48,33 @@ router.get('/clientes/:rfc', async (req, res) => {
     }
 });
 
+router.post('/clientes/rfc', async (req, res) => {
+    try {
+        const { nombre_legal, RFC, Regimen_Fiscal } = req.body;
+        const newCliente = await mongoConexion.createClienteSAT(nombre_legal, RFC, Regimen_Fiscal);
 
+        // Si la creación del cliente fue exitosa, responder con el nuevo cliente
+        res.status(201).json(newCliente);
+    } catch (error) {
+        if (error.message === "Regimen fiscal inexistente") {
+            console.error("Error: Regimen fiscal inexistente");
+            res.status(400).json({ error: "Regimen fiscal inexistente" });
+        } else {
+            console.error("Error 400: ", error.message);
+            res.status(400).json({ error: error.message });
+        }
+    }
+});
+
+router.get('/clientes/rfc/consultar', async (req, res) => {
+    try {
+        const clientes = await mongoConexion.getClientevRFC();
+        res.json(clientes);
+    } catch (error) {
+        console.error("Error al obtener clientes:", error);
+        res.status(500).json({ error: "Error al obtener clientes" });
+    }
+});
 
 
     
