@@ -28,4 +28,18 @@ router.get('/productos', async (req, res) => {
     }
 });
 
+router.get('/productos/:producto_key', async (req, res) => {
+    const product = req.params.producto_key
+    const producto = parseInt(product.substring(14));
+    try {
+
+        const p_producto = await productoController.buscarProductoPorPK(producto); 
+        res.json(p_producto); 
+    } catch (error) {
+        console.error("Error al obtener el producto por product key: ", error);
+        res.status(500).json({ error: "Error al obtener el producto por product key" });
+    }
+    console.log(producto);
+});
+
 module.exports = router;

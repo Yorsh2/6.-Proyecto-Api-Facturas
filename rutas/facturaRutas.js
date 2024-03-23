@@ -25,5 +25,18 @@ router.get('/facturas', async (req, res) => {
     }
 });
 
+router.get('/facturas/:numero_folio', async (req, res) => {
+    const numero = req.params.numero_folio
+    const folio = parseInt(numero.substring(14));
+    try {
+
+        const num_folio = await facturaController.buscarFacturaPorNM(folio); 
+        res.json(num_folio); 
+    } catch (error) {
+        console.error("Error al obtener el numero de folio: ", error);
+        res.status(500).json({ error: "Error al obtener el numero de folio" });
+    }
+});
+
 
 module.exports = router;

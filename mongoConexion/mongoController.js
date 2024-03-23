@@ -214,6 +214,39 @@ async function getFacturas() {
     }
 }
 
+async function buscarClientePorRFC(rfc) {
+    try {
+        await client.connect();
+        const collection = client.db("Clientes").collection("Clientes");
+        return await collection.findOne({ id_impuestos: rfc });
+    } catch (error) {
+        console.error("Error al obtener el cliente por RFC:", error);
+        throw error;
+    }
+}
+
+async function buscarProductoPorPK(pk) {
+    try {
+        await client.connect();
+        const collection = client.db("Productos").collection("productos_data");
+        return await collection.findOne({ producto_key : pk});
+    } catch (error) {
+        console.error("Error al obtener el producto por Product Key:", error);
+        throw error;
+    } 
+}
+
+async function buscarFacturaPorNM(nm) {
+    try {
+        await client.connect();
+        const collection = client.db("Factura").collection("factura_data");
+        return await collection.findOne({ numero_folio : nm});
+    } catch (error) {
+        console.error("Error al obtener la factura por numero de folio :", error);
+        throw error;
+    } 
+}
+
 
 main().catch(console.error);
 module.exports = {
@@ -222,6 +255,9 @@ module.exports = {
     createProducto,
     getProductos,
     createFactura,
-    getFacturas
+    getFacturas,
+    buscarClientePorRFC,
+    buscarProductoPorPK,
+    buscarFacturaPorNM
 }
 

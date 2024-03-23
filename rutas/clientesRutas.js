@@ -35,5 +35,22 @@ router.get('/clientes', async (req, res) => {
   }
 });
 
+router.get('/clientes/:rfc', async (req, res) => {
+    const rfcParam = req.params.rfc.toString(); // Obtener el parámetro de la URL como una cadena
+    const rfc = rfcParam.substring(5); // Quitar los primeros 5 caracteres ":rfc="
+    try {
+        // Obtener el cliente por RFC
+        const cliente = await mongoConexion.buscarClientePorRFC(rfc); 
+        res.json(cliente); // Responder con el cliente encontrado
+    } catch (error) {
+        console.error("Error al obtener cliente por RFC:", error);
+        res.status(500).json({ error: "Error al obtener cliente por RFC" });
+    }
+});
+
+
+
+
+    
 module.exports = router;
 
