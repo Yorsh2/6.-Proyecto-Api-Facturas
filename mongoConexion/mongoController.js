@@ -2,7 +2,7 @@ const { MongoClient } = require('mongodb');
 
 const cl = require('../controllers/ClienteController');
 
-const uri = "mongodb+srv://guzmancitojorge17:ZU0x4wT3ajEYlgKs@cluster0.lwiovtr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const uri = "mongodb+srv://guzmancitojorge17:0KSqpFNv9Ts8UhRe@cluster0.xkkwa9g.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 //const uri = "mongodb://localhost:27019";
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -31,29 +31,14 @@ async function createCliente(nombre_legal, id_impuestos, sistema_impuestos, emai
         // Seleccionar la colección
         const collection = client.db("Clientes").collection("Clientes");
 
-        const existeCliente = await cl.clienteExistente(nombre_legal, id_impuestos, sistema_impuestos);
-        if (existeCliente) {
-            throw new Error('Error 400: El cliente ya está registrado.');
-        }
-
-        // Obtener información sobre la colonia
-        // Buscar clientes existentes con los mismos criterios de búsqueda
         if (id_impuestos === undefined) {throw new Error("Error 400: No se ha proporcionado el RFC.");}  
         if (sistema_impuestos === undefined) {throw new Error("Error 400: No se ha proporcionado el sistema de impuestos.");} 
-        // Verificar si no se encontraron clientes existentes
-        const clientesExistentes = await cl.buscarClientes(nombre_legal, id_impuestos, sistema_impuestos);
-        if (clientesExistentes.length === 0) {throw new Error('Error 400: No se encontraron clientes existentes con los mismos criterios de búsqueda.');}
-        
-        // Verificar si existe la colonia
         const infoColonia = await cl.getInfoCP(codigoPostal, colonia);
         if (infoColonia.error) {throw new Error("Error 400: La colonia no está presente en el código postal.");}        
-        
-        //Verificar si existe el cliente
-        const clienteExistente = await cl.clienteExistente(id_impuestos);
-        if (clienteExistente) {
-            throw new Error("Error 400: El cliente ya se encuentra registrado en la base de datos.");
-        }
-
+        const clientesExistenConRFC = await cl.buscarClientes(id_impuestos);
+        if (!clientesExistenConRFC || clientesExistenConRFC.length === 0) {throw new Error("Error 404: Cliente no encontrado en la base de datos.");}
+        const clienteExistente = await cl.existeCliente(id_impuestos);
+        if (clienteExistente) {throw new Error("Error 400: Ya existe un cliente con el mismo RFC en la base de datos clientes.");}
 
         // Crear un nuevo documento
         const newCliente = {
@@ -89,7 +74,7 @@ async function createCliente(nombre_legal, id_impuestos, sistema_impuestos, emai
             throw new Error("Error 400: Código postal inválido");
         }
 
-        const RFC = await cl.buscarRFC_Cliente(id_impuestos);
+        const RFC = await buscarClientePorRFC(id_impuestos);
         if (estado === "Error 400: No se encontró al cliente en la base de datos.") {
             throw new Error("Error 400: No se encontró al cliente en la base de datos.");
         }
@@ -174,7 +159,7 @@ async function createFactura(forma_pago, numero_folio, serie, rfc, producto_key)
         await client.connect();
         const collection = client.db("Factura").collection("factura_data");
         //Verificar si existe el cliente
-        const clientExiste = await cl.getClienteByRFC(rfc);
+        const clientExiste = await buscarClientePorRFC(rfc);
         if (!clientExiste) {throw new Error("Error 400: El cliente no se encuentra registrado en la base de datos.");}
         //Verificar si existe el producto
         const productoExiste = await cl.getProductByKey(producto_key);
@@ -199,7 +184,7 @@ async function createFactura(forma_pago, numero_folio, serie, rfc, producto_key)
         await collection.insertOne(newFactura);
         return newFactura;
     } catch (error) {
-        console.error("Error 400: Error al insertar una factura en la base de datos:", error);
+       // throw new Error("Error 400: Error al insertar una factura en la base de datos:", error);
         throw error;
     }
 }

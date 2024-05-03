@@ -1,7 +1,7 @@
 const cl = require('../Models/Clientes');
 
 const { MongoClient } = require('mongodb');
-const uri = "mongodb+srv://guzmancitojorge17:ZU0x4wT3ajEYlgKs@cluster0.lwiovtr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const uri = "mongodb+srv://guzmancitojorge17:0KSqpFNv9Ts8UhRe@cluster0.xkkwa9g.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 let clientes = [
@@ -113,7 +113,7 @@ async function getInfoCP(zipCode, colonia) {
     }
 }
   
-async function buscarClientes(nombreLegal, rfc, regimenFiscal) {
+async function buscarClientes(rfc) {
     try {
         await client.connect(); // Conectar a la base de datos
         const db = client.db('Clientes'); // Seleccionar la base de datos
@@ -128,103 +128,16 @@ async function buscarClientes(nombreLegal, rfc, regimenFiscal) {
         };
   
         // Construir el filtro de búsqueda
-        const filtro = {};
-        if (nombreLegal) filtro.Nombre_Legal = nombreLegal;
-        if (rfc) filtro.RFC = rfc;
-        if (regimenFiscal) filtro.Regimen_Fiscal = regimenFiscal;
+        const filtro = { RFC: rfc };
 
         const clientes = await collection.find(filtro, projection).toArray();
 
-        // Verificar si no se encontraron resultados
-        if (clientes.length === 0) {
-            throw new Error('Error 400: No se encontraron clientes que coincidan con los criterios de búsqueda.');
-        }
         return clientes;
     } catch (error) {
-        console.error('Error en la búsqueda de clientes:', error);
+        console.error('Error en la búsqueda de clientes por RFC:', error);
         throw error;
     }
 }
-
-async function buscarClientes(nombreLegal, rfc, regimenFiscal) {
-    try {
-        await client.connect(); // Conectar a la base de datos
-        const db = client.db('Clientes'); // Seleccionar la base de datos
-        const collection = db.collection('clientes_data'); // Seleccionar la colección
-  
-        // Especificar los campos que deseas recuperar
-        const projection = {
-            _id: 0, // Excluir el campo _id
-            Nombre_Legal: 1,
-            RFC: 1,
-            Regimen_Fiscal: 1
-        };
-  
-        // Construir el filtro de búsqueda
-        const filtro = {};
-        if (nombreLegal) filtro.Nombre_Legal = nombreLegal;
-        if (rfc) filtro.RFC = rfc;
-        if (regimenFiscal) filtro.Regimen_Fiscal = regimenFiscal;
-
-        const clientes = await collection.find(filtro, projection).toArray();
-
-        // Verificar si no se encontraron resultados
-        if (clientes.length === 0) {
-            throw new Error('Error 400: No se encontraron clientes que coincidan con los criterios de búsqueda.');
-        }
-        return clientes;
-    } catch (error) {
-        console.error('Error en la búsqueda de clientes:', error);
-        throw error;
-    }
-}
-
-async function clienteExistente(nombreLegal, rfc, regimenFiscal) {
-    try {
-        await client.connect(); // Conectar a la base de datos
-        const db = client.db('Clientes'); // Seleccionar la base de datos
-        const collection = db.collection('clientes_data'); // Seleccionar la colección
-  
-        // Especificar los campos que deseas recuperar
-        const projection = {
-            _id: 0, // Excluir el campo _id
-            Nombre_Legal: 1,
-            RFC: 1,
-            Regimen_Fiscal: 1
-        };
-  
-        // Construir el filtro de búsqueda
-        const filtro = {};
-        if (nombreLegal) filtro.Nombre_Legal = nombreLegal;
-        if (rfc) filtro.RFC = rfc;
-        if (regimenFiscal) filtro.Regimen_Fiscal = regimenFiscal;
-
-        const clientes = await collection.find(filtro, projection).toArray();
-
-        // Verificar si no se encontraron resultados
-        if (clientes.length === 0) {
-            throw new Error('Error 400: No se encontraron clientes que coincidan con los criterios de búsqueda.');
-        } else if (clientes.length > 0) {
-            throw new Error('Error 400: El cliente ya está registrado.');
-        }
-        
-        return clientes;
-    } catch (error) {
-        console.error('Error 400: Error en la búsqueda de clientes:', error);
-        throw error;
-    }
-}
-
-async function getClienteByRFC(rfc) {
-    try {
-        const collection = client.db("Clientes").collection("Clientes");
-        return await collection.findOne({ id_impuestos: rfc });
-    } catch (error) { 
-        console.error("Error 400: Error al obtener el cliente por RFC:", error);
-        throw error;
-    }
-}
-
 
 async function getProductByKey(producto_key) {
     try {
@@ -275,10 +188,18 @@ async function getFacturaSerie(serie) {
 
 async function existeCliente(rfc) {
     try {
-        const collection = client.db("Clientes").collection("Clientes");
-        return await collection.findOne({ rfc });
+        await client.connect(); // Conectar a la base de datos
+        const db = client.db('Clientes'); // Seleccionar la base de datos
+        const collection = db.collection('Clientes'); 
+  
+        const projection = {
+            id_impuestos: 1
+        };
+        const filtro = { id_impuestos: rfc };
+        const clientes = await collection.find(filtro, projection).toArray();
+        return clientes;
     } catch (error) {
-        console.error("Error 400: Error al obtener el cliente:", error);
+        console.error('Error en la búsqueda de clientes por RFC:', error);
         throw error;
     }
 }
@@ -292,8 +213,6 @@ module.exports = {
     validarRegimen,
     getInfoCP,
     buscarClientes,
-    clienteExistente,
-    getClienteByRFC,
     getProductByKey,
     productoExistente,
     getFacturaNum,
